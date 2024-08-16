@@ -1,0 +1,24 @@
+node('built-in') {
+    stage('ContinuousDownload') {
+        git 'https://github.com/shivaramsb/maven.git'
+    }
+    
+    stage('ContinuousBuild') {
+        sh 'mvn package'
+    }
+    
+    stage('ContinousDeploy') {
+        deploy adapters: [tomcat9(credentialsId: 'ba47bc73-c9ca-47c5-8eed-88b86dc6384f', path: '', url: 'http://172.31.85.36:8080')], contextPath: 'testapp4', war: '**/*.war'
+    }
+    
+    stage('ContinuousTesting') {
+        git 'https://github.com/shivaramsb/Functional-Testing.git'
+        // Ensure the space in the directory name is handled
+        sh 'java -jar "/var/lib/jenkins/workspace/ScriptedPipeline/testing.jar"'
+    }
+    
+    stage('ContinuousDelivery') {
+        input message: 'Please approve deployment', submitter: 'admin'
+        deploy adapters: [tomcat9(credentialsId: '915ad311-4e9b-44d9-b785-4e0e82c9eefb', path: '', url: 'http://172.31.85.96:8080')], contextPath: 'prodapp4', war: '**/*.war'
+    }
+}
