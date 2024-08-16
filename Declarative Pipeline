@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('ContinuousDownload') {
+            steps 
+            {
+                git 'https://github.com/shivaramsb/maven.git'
+            }
+        }
+        stage('ContinuousBuild') {
+            steps 
+            {
+                sh 'mvn package'
+            }
+        }
+        stage('ContinousDeploy') {
+            steps 
+            {
+                deploy adapters: [tomcat9(credentialsId: 'ba47bc73-c9ca-47c5-8eed-88b86dc6384f', path: '', url: 'http://172.31.85.36:8080')], contextPath: 'testapp5', war: '**/*.war'
+            }
+        }
+        stage('ContinuousTesting') {
+            steps 
+            {
+                git 'https://github.com/shivaramsb/Functional-Testing.git'
+                sh 'java -jar /var/lib/jenkins/workspace/DeclarativePipeline/testing.jar'
+            }
+        }
+        stage('ContinuousDelivery') {
+            steps 
+            {
+                input message: 'Approve delivery of code', submitter: 'admin'
+                deploy adapters: [tomcat9(credentialsId: '915ad311-4e9b-44d9-b785-4e0e82c9eefb', path: '', url: 'http://172.31.85.96:8080')], contextPath: 'prodapp5', war: '**/*.war'
+            }
+        }
+    }
+}
